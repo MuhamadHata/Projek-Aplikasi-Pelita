@@ -64,7 +64,7 @@ class _KonsultasiScreenState extends State<KonsultasiScreen> {
   void _initGemini(String apiKey) {
     try {
       _model = GenerativeModel(
-        model: 'gemini-1.5-flash',
+        model: 'gemini-3.5-flash-lite',
         apiKey: apiKey,
         systemInstruction: Content.system(
           "Kamu adalah ahli gizi profesional untuk balita pada aplikasi Pelita. "
@@ -222,8 +222,19 @@ class _KonsultasiScreenState extends State<KonsultasiScreen> {
           "Kunci API Gemini terblokir atau dilaporkan bocor oleh Google (Error 403).\n\n"
           "Solusi Cepat:\n"
           "1. Buka https://aistudio.google.com/app/apikey\n"
-          "2. Klik 'Create API key' (Gratis)\n"
+          "2. Klik 'Create API key' dan pilih 'Create in new project'\n"
           "3. Klik ikon kunci (🔑) di kanan atas layar ini lalu tempel kunci baru.",
+        );
+      } else if (errStr.contains("429") ||
+          errStr.contains("prepayment") ||
+          errStr.contains("RESOURCE_EXHAUSTED")) {
+        _showError(
+          "Kuota token/kredit API habis (Error 429).\n\n"
+          "Solusi Gratis Selamanya:\n"
+          "1. Buka https://aistudio.google.com/app/apikey\n"
+          "2. Klik 'Create API key'\n"
+          "3. PILIH opsi 'Create in new project' (agar mendapatkan Free Tier gratis tanpa perlu saldo/prepayment)\n"
+          "4. Klik ikon kunci (🔑) di pojok kanan atas lalu tempel kunci baru.",
         );
       } else {
         _showError("Gagal menghubungi Gemini AI: $e");
