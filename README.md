@@ -49,31 +49,15 @@
 
 ---
 
-## 🖼️ Tampilan Antarmuka Aplikasi
-
-| Layar Pembuka | Beranda (Home) | Kalkulator Gizi |
-| :---: | :---: | :---: |
-| ![Layar Pembuka](./figma%20pelita/Layar%20Pembuka.png) | ![Home](./figma%20pelita/Home.png) | ![Kalkulator Gizi](./figma%20pelita/Kalkulator%20Gizi%201.png) |
-
-| Konsultasi AI | Hasil Analisis Gizi | Riwayat Pertumbuhan |
-| :---: | :---: | :---: |
-| ![Konsultasi](./figma%20pelita/Konsultasi.png) | ![Hasil Perhitungan](./figma%20pelita/Hasil%20Perhitungan%20Kalkulator%20Gizi.png) | ![Riwayat](./figma%20pelita/Riwayat.png) |
-
-| Profil Pengguna | Onboarding | Keamanan Akun |
-| :---: | :---: | :---: |
-| ![Profil](./figma%20pelita/Profil.png) | ![Onboarding](./figma%20pelita/03%20-%20A%20-%20Onboarding.png) | ![Pengelola Password](./figma%20pelita/Pengelola%20Password.png) |
-
----
-
 ## 🛠️ Arsitektur & Teknologi
 
 * **Framework Utama:** [Flutter](https://flutter.dev) (Dart SDK v3.11+)
-* **Desain UI/UX:** Material Design 3 dengan palet warna Teal & Cyan ramah anak
+* **Desain UI/UX:** Material Design 3 dengan palet warna Teal & Cyan ramah anak ([Lihat Rancangan Figma](https://www.figma.com/design/FhsV4fWjx3VstlG7Kd2fjh/Pelita?node-id=2052-1969))
 * **Cloud Database & Backend:** [Supabase](https://supabase.com)
   * Supabase Authentication & Session Storage
   * PostgreSQL Database with Row Level Security (RLS)
   * Storage Buckets untuk penyimpanan aset avatar/stego
-* **Artificial Intelligence:** [Google Generative AI SDK](https://pub.dev/packages/google_generative_ai) (Gemini 1.5 Flash)
+* **Artificial Intelligence:** [Google Generative AI SDK](https://pub.dev/packages/google_generative_ai) (Gemini 3.5 Flash-Lite - Super Cepat & Hemat Token)
 * **Kriptografi & Keamanan:** `encrypt` (AES-256-CBC with PKCS7), `image` (LSB Bitmap processing)
 * **Akses Galeri & Media:** `image_picker` & `gal`
 
@@ -85,7 +69,6 @@
 Aplikasi Pelita/
 ├── android/               # Konfigurasi native Android & AndroidManifest
 ├── Asset/                 # Aset gambar lokal, ilustrasi onboarding, dan logo
-├── figma pelita/          # Tangkapan layar desain mockup UI/UX
 ├── lib/                   # Kode sumber utama Flutter (Dart)
 │   ├── main.dart                  # Titik masuk aplikasi, inisialisasi Supabase & auto-login
 │   ├── home_screen.dart           # Dashboard beranda, artikel gizi, & navigasi utama
