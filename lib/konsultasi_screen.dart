@@ -27,6 +27,7 @@ class _KonsultasiScreenState extends State<KonsultasiScreen> {
 
   GenerativeModel? _model;
   ChatSession? _chatSession;
+  String _activeModelName = 'gemini-3.5-flash-lite';
 
   // Data riwayat gizi terakhir user
   String _riwayatContext = "";
@@ -35,6 +36,12 @@ class _KonsultasiScreenState extends State<KonsultasiScreen> {
   List<Map<String, dynamic>> _savedSessions = [];
   String? _currentSessionId;
   String _currentSessionTitle = "";
+
+  static const List<String> _fallbackModels = [
+    'gemini-3.5-flash-lite',
+    'gemini-flash-lite-latest',
+    'gemini-3.6-flash',
+  ];
 
   @override
   void initState() {
@@ -55,13 +62,11 @@ class _KonsultasiScreenState extends State<KonsultasiScreen> {
   }
 
   Future<void> _loadAndInitGemini() async {
-    // 1. Ambil riwayat gizi terakhir dari Supabase
     await _fetchLatestRiwayat();
 
-    // 2. Load API Key dari konfigurasi internal
     if (ApiConfig.defaultGeminiApiKey.trim().isNotEmpty) {
       _geminiApiKey = ApiConfig.defaultGeminiApiKey.trim();
-      _initGemini(_geminiApiKey);
+      _initGemini(_geminiApiKey, modelName: _activeModelName);
     }
   }
 
@@ -87,7 +92,6 @@ class _KonsultasiScreenState extends State<KonsultasiScreen> {
         return;
       }
 
-      // Format data riwayat menjadi teks konteks
       StringBuffer sb = StringBuffer();
       sb.writeln("Berikut adalah riwayat pengecekan gizi terakhir user:");
 
@@ -99,7 +103,6 @@ class _KonsultasiScreenState extends State<KonsultasiScreen> {
         String jk = item['jenis_kelamin'] ?? "-";
         String waktu = item['created_at'] ?? "-";
 
-        // Hitung IMT
         double imt = berat / ((tinggi / 100) * (tinggi / 100));
         String statusIMT;
         if (imt < 14) {
@@ -112,10 +115,7 @@ class _KonsultasiScreenState extends State<KonsultasiScreen> {
           statusIMT = "Obesitas";
         }
 
-        // Hitung BBI
         double bbi = (umur * 2) + 8;
-
-        // Hitung Kebutuhan Energi
         double energiPerKg = umur <= 3 ? 95 : 85;
         double energi = berat * energiPerKg;
 
@@ -144,10 +144,11 @@ class _KonsultasiScreenState extends State<KonsultasiScreen> {
     }
   }
 
-  void _initGemini(String apiKey, {List<Content>? initialHistory}) {
+  void _initGemini(String apiKey, {required String modelName, List<Content>? initialHistory}) {
     try {
+      _activeModelName = modelName;
       _model = GenerativeModel(
-        model: 'gemini-1.5-flash',
+        model: modelName,
         apiKey: apiKey,
         systemInstruction: Content.system(
           "Kamu adalah ahli gizi profesional khusus balita (usia 1-5 tahun) pada aplikasi Pelita. "
@@ -167,13 +168,13 @@ class _KonsultasiScreenState extends State<KonsultasiScreen> {
         ),
         generationConfig: GenerationConfig(
           temperature: 0.7,
-          maxOutputTokens: 500,
+          maxOutputTokens: 600,
         ),
       );
 
       _chatSession = _model?.startChat(history: initialHistory);
     } catch (e) {
-      debugPrint("Error inisialisasi Gemini: $e");
+      debugPrint("Error inisialisasi Gemini ($modelName): $e");
     }
   }
 
@@ -255,7 +256,7 @@ class _KonsultasiScreenState extends State<KonsultasiScreen> {
     });
 
     if (_geminiApiKey.isNotEmpty) {
-      _initGemini(_geminiApiKey);
+      _initGemini(_geminiApiKey, modelName: _activeModelName);
     }
 
     if (mounted) {
@@ -279,7 +280,6 @@ class _KonsultasiScreenState extends State<KonsultasiScreen> {
       }
     });
 
-    // Reconstruct Gemini history for continuity
     if (_geminiApiKey.isNotEmpty) {
       List<Content> history = [];
       for (var msg in _messages) {
@@ -293,7 +293,7 @@ class _KonsultasiScreenState extends State<KonsultasiScreen> {
           }
         }
       }
-      _initGemini(_geminiApiKey, initialHistory: history.isNotEmpty ? history : null);
+      _initGemini(_geminiApiKey, modelName: _activeModelName, initialHistory: history.isNotEmpty ? history : null);
     }
 
     _scrollToBottom();
@@ -368,7 +368,6 @@ class _KonsultasiScreenState extends State<KonsultasiScreen> {
               ),
               child: Column(
                 children: [
-                  // Handle bar
                   Container(
                     margin: const EdgeInsets.only(top: 12, bottom: 8),
                     width: 45,
@@ -378,8 +377,6 @@ class _KonsultasiScreenState extends State<KonsultasiScreen> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-
-                  // Header
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     child: Row(
@@ -417,8 +414,6 @@ class _KonsultasiScreenState extends State<KonsultasiScreen> {
                     ),
                   ),
                   const Divider(height: 1),
-
-                  // History list / Empty state
                   Expanded(
                     child: _savedSessions.isEmpty
                         ? Center(
@@ -589,8 +584,6 @@ class _KonsultasiScreenState extends State<KonsultasiScreen> {
                             },
                           ),
                   ),
-
-                  // Bottom Action: New Chat
                   SafeArea(
                     top: false,
                     child: Padding(
@@ -725,52 +718,65 @@ class _KonsultasiScreenState extends State<KonsultasiScreen> {
     _chatController.clear();
     _scrollToBottom();
 
-    try {
-      if (_chatSession == null) {
-        _initGemini(_geminiApiKey);
+    String? reply;
+    dynamic lastError;
+
+    // Coba kirim dengan model utama, lalu fallback otomatis jika terjadi error
+    for (final modelName in _fallbackModels) {
+      try {
+        if (_chatSession == null || _activeModelName != modelName) {
+          _initGemini(_geminiApiKey, modelName: modelName);
+        }
+
+        final response = await _chatSession?.sendMessage(Content.text(text));
+        if (response?.text != null && response!.text!.trim().isNotEmpty) {
+          reply = response.text!.trim();
+          break;
+        }
+      } catch (e) {
+        lastError = e;
+        debugPrint("Gemini failed with model $modelName: $e");
+        _chatSession = null; // Reset session to try fallback model
       }
+    }
 
-      final response = await _chatSession?.sendMessage(Content.text(text));
-      final reply = response?.text;
-
-      if (reply != null && reply.trim().isNotEmpty) {
-        if (!mounted) return;
+    if (reply != null) {
+      if (mounted) {
         setState(() {
           _messages.add({
             "role": "bot",
-            "text": reply.trim(),
+            "text": reply,
             "time": DateFormat('HH:mm').format(DateTime.now()),
           });
         });
-      } else {
-        _showError("AI tidak memberikan respon, silakan coba lagi.");
       }
-    } catch (e) {
-      debugPrint("Gemini error detail: $e");
-      final errStr = e.toString();
+    } else {
+      debugPrint("All Gemini models failed. Last error: $lastError");
+      final errStr = lastError.toString();
       if (errStr.contains("leaked") ||
           errStr.contains("403") ||
           errStr.contains("PERMISSION_DENIED") ||
           errStr.contains("API_KEY_INVALID")) {
         _showError(
-          "Layanan konsultasi sedang mengalami gangguan. Silakan coba lagi nanti.",
+          "Layanan konsultasi sedang mengalami gangguan konfigurasi. Silakan coba lagi nanti.",
         );
       } else if (errStr.contains("429") ||
           errStr.contains("prepayment") ||
-          errStr.contains("RESOURCE_EXHAUSTED")) {
+          errStr.contains("RESOURCE_EXHAUSTED") ||
+          errStr.contains("503")) {
         _showError(
-          "Layanan konsultasi sedang sibuk. Silakan coba lagi dalam beberapa menit.",
+          "Layanan konsultasi sedang sibuk. Silakan coba lagi dalam beberapa saat.",
         );
       } else {
         _showError(
           "Gagal terhubung ke layanan konsultasi. Periksa koneksi internet Anda dan coba lagi.",
         );
       }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        _saveCurrentSession();
-      }
+    }
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+      _saveCurrentSession();
       _scrollToBottom();
     }
   }
