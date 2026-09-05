@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'home_screen.dart'; // Import model Artikel
-import 'security_service.dart';
 
 class DetailArtikelScreen extends StatelessWidget {
   final Artikel artikel;
@@ -11,16 +10,14 @@ class DetailArtikelScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     const Color primaryColor = Color(0xFF26D0D9);
 
-    // 1. Ambil data user yang sedang login dari Supabase
     final user = Supabase.instance.client.auth.currentUser;
 
-    // 2. Logika Nama Dinamis
     final String rawName =
         user?.userMetadata?['full_name'] ??
         user?.userMetadata?['name'] ??
         "";
     final String displayName = rawName.isNotEmpty
-        ? SecurityService.decryptAES(rawName)
+        ? rawName
         : (user?.email?.split('@')[0] ?? "User");
 
     // 3. Logika Foto Profil Dinamis (Mendukung URL atau Asset)

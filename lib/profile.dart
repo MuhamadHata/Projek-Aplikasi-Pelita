@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'login_screen.dart';
 import 'edit_profile_page.dart';
 import 'change_password_page.dart';
-import 'security_service.dart';
+
 import 'stego_screen.dart'; // <--- IMPORT SUDAH DITAMBAHKAN
 
 class ProfilePage extends StatefulWidget {
@@ -39,8 +39,7 @@ class _ProfilePageState extends State<ProfilePage> {
     if (mounted) {
       setState(() {
         String rawName = metadata?['full_name'] ?? "";
-        _name =
-            rawName.isNotEmpty ? SecurityService.decryptAES(rawName) : "User";
+        _name = rawName.isNotEmpty ? rawName : "User";
         _email = user?.email ?? "-";
         _phone = metadata?['phone'] ?? "-";
         _avatarPath = metadata?['avatar_path'] ?? 'Asset/login.png';

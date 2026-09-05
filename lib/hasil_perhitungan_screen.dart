@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; // Sekarang akan terpakai
 import 'detail_hasil_screen.dart';
-import 'security_service.dart';
 
 class HasilPerhitunganScreen extends StatelessWidget {
   const HasilPerhitunganScreen({super.key});
@@ -10,12 +9,10 @@ class HasilPerhitunganScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // BARIS INI YANG MEMBUAT IMPORT SUPABASE DIGUNAKAN:
-    // Kita mengambil data user yang sedang login dari Supabase
     final user = Supabase.instance.client.auth.currentUser;
     final String rawName = user?.userMetadata?['full_name'] ?? "";
     final String displayName = rawName.isNotEmpty
-        ? SecurityService.decryptAES(rawName)
+        ? rawName
         : (user?.email?.split('@')[0] ?? "User");
 
     return Scaffold(

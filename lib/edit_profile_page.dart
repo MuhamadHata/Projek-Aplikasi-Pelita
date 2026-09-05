@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'security_service.dart';
+
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -27,14 +27,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _loadUserData();
   }
 
-  // FUNGSI MENGAMBIL DATA DARI METADATA SUPABASE
   void _loadUserData() {
     final user = Supabase.instance.client.auth.currentUser;
     if (user != null) {
       final String rawName = user.userMetadata?['full_name'] ?? "";
       setState(() {
-        _fullNameController.text =
-            rawName.isNotEmpty ? SecurityService.decryptAES(rawName) : "";
+        _fullNameController.text = rawName;
         _emailController.text = user.email ?? "";
         _phoneController.text = user.userMetadata?['phone'] ?? "";
         _dobController.text = user.userMetadata?['dob'] ?? "";
@@ -93,8 +91,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       await Supabase.instance.client.auth.updateUser(
         UserAttributes(
           data: {
-            'full_name':
-                SecurityService.encryptAES(_fullNameController.text.trim()),
+            'full_name': _fullNameController.text.trim(),
             'phone': _phoneController.text.trim(),
             'dob': _dobController.text.trim(),
           },

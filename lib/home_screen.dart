@@ -5,7 +5,7 @@ import 'kalkulator_gizi_screen.dart';
 import 'konsultasi_screen.dart';
 import 'profile.dart';
 import 'riwayat.dart';
-import 'security_service.dart'; // 1. WAJIB IMPORT INI
+
 
 // --- MODEL DATA ---
 class Artikel {
@@ -62,21 +62,14 @@ Pertumbuhan linier pada masa kanak-kanak awal merupakan penanda kuat pertumbuhan
     _loadUserData();
   }
 
-  // 2. FUNGSI LOAD DATA DENGAN DEKRIPSI
   void _loadUserData() {
     final user = Supabase.instance.client.auth.currentUser;
     if (user != null && mounted) {
       setState(() {
-        // AMBIL DATA MENTAH
         String rawName = user.userMetadata?['full_name'] ?? "";
-
-        // PROSES DEKRIPSI
-        // Jika rawName ada isinya, kita decrypt.
-        // Jika kosong, kita ambil dari email atau default "User"
         _userName = rawName.isNotEmpty
-            ? SecurityService.decryptAES(rawName)
+            ? rawName
             : (user.email?.split('@')[0] ?? "User");
-
         _avatarPath = user.userMetadata?['avatar_path'] ?? 'Asset/login.png';
       });
     }

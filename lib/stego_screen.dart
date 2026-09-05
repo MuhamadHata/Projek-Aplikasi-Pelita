@@ -9,7 +9,7 @@ import 'package:encrypt/encrypt.dart' as encrypt_package;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:file_saver/file_saver.dart';
 import 'package:gal/gal.dart';
-import 'security_service.dart';
+
 
 class StegoScreen extends StatefulWidget {
   const StegoScreen({super.key});
@@ -84,8 +84,7 @@ class _StegoScreenState extends State<StegoScreen> {
       if (image == null) throw "Gambar tidak didukung";
 
       String rawName = user.userMetadata?['full_name'] ?? "";
-      String fullName =
-          rawName.isNotEmpty ? SecurityService.decryptAES(rawName) : "User";
+      String fullName = rawName.isNotEmpty ? rawName : "User";
 
       Map<String, String> dataMap = {
         "Nama": fullName,

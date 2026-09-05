@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'main.dart';
 import 'login_screen.dart';
 import 'onboarding_screen.dart';
-import 'security_service.dart'; // 1. Tambahkan Import SecurityService
+
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -108,8 +108,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         email: email,
         password: password,
         data: {
-          // 2. ENKRIPSI NAMA DI SINI
-          'full_name': SecurityService.encryptAES(_fullNameController.text),
+          'full_name': _fullNameController.text.trim(),
           'phone': _phoneController.text,
           'dob': _dobController.text,
         },
